@@ -8,10 +8,12 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -85,29 +87,28 @@ public class StatementDaoImpl implements StatementDao{
 				sqlex.printStackTrace();
 			}
 		}
-//		
-//	if (authorities.contains("ROLE_USER"))
-//		{
-//			if(data.getAccId().isEmpty() && data.getAmountFrom().isEmpty() && data.getAmountTo().isEmpty() && data.getDateFrom().isEmpty() && data.getAmountTo().isEmpty())
-//			{
-//				
-//				DateTimeFormatter your_format =  DateTimeFormatter.ofPattern("dd-MMM-yyyy");
-//
-//			    String formattedDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-//			    LocalDate today = LocalDate.parse(formattedDate);
-//			    String endDate=today.minusMonths(4).toString();
-//			    
-//			    Date dataFromDate = (Date) your_format.parse(endDate);
-//				Date dataToDate = (Date) your_format.parse(formattedDate);
-//
-//				data.setDateTo(dataToDate.toString().replace("-", "."));
-//				data.setDateFrom(dataFromDate.toString().replace("-", "."));
-//
-//
-//
-//			}
+		
+	if (authorities.contains("ROLE_USER"))
+		{
+			if(data.getAccId().isEmpty() && data.getAmountFrom().isEmpty() && data.getAmountTo().isEmpty() && data.getDateFrom().isEmpty() && data.getAmountTo().isEmpty())
+			{
+				Object dataFromDate;
+				Object dataToDate;
+
+				LocalDateTime ldt = LocalDateTime.now();
+		        LocalDate threeMonthAgo = LocalDate.now().minusMonths(3);
+
+				dataToDate = DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH).format(ldt);
+				dataFromDate = DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ENGLISH).format(threeMonthAgo);
+
+				data.setDateTo(dataToDate.toString().replace("-", "."));
+				data.setDateFrom(dataFromDate.toString().replace("-", "."));
+
+
+
+			}
 	
-//	}
+	}
 		return getListBasedOnData(data,statements);
 	
 	}
@@ -139,8 +140,11 @@ public class StatementDaoImpl implements StatementDao{
 			dataFromDate = sdf.parse(data.getDateFrom());
 			dataToDate = sdf.parse(data.getDateTo());
 		}
-		if(data.getAccId().isEmpty() && Integer.valueOf(stmt.getAccountId()).equals(Integer.valueOf((data.getAccId())))){
-			if(data.getAmountFrom().isEmpty() && data.getDateFrom().isEmpty())
+			if(!data.getAccId().isEmpty() && Integer.valueOf(stmt.getAccountId()).equals(Integer.valueOf((data.getAccId()))))
+				return true;
+
+		
+			else if(data.getAmountFrom().isEmpty() && data.getDateFrom().isEmpty())
 				return true;
 			else if(((!data.getDateFrom().isEmpty() && data.getAmountFrom().isEmpty())&& stmtFromDate.after(dataFromDate) && stmtFromDate.before(dataToDate)))
 				return true;
@@ -149,7 +153,7 @@ public class StatementDaoImpl implements StatementDao{
 			else if((!data.getDateFrom().isEmpty() && stmtFromDate.after(dataFromDate) && stmtFromDate.before(dataToDate))
 					&&(!data.getAmountFrom().isEmpty() && dataFromAmount<stmtAmount && stmtAmount<dataToAmount))
 				return true;
-		}
+		
 		return false;
 
 	}
